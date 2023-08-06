@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Blog</title>
+</head>
+<body>
+    <h1>Simple Blog</h1>
+    <div id="posts"></div>
+    <button onclick="createPost()">Create New Post</button>
+    <script>
+        async function fetchPosts() {
+            const response = await fetch('/api/posts');
+            const posts = await response.json();
+            const postsDiv = document.getElementById('posts');
+            postsDiv.innerHTML = '';
+            for (const post of posts) {
+                const postDiv = document.createElement('div');
+                postDiv.innerHTML = `
+                    <h2>${post.author}</h2>
+                    <p>${post.text}</p>
+                    <p>Keywords: ${post.keywords}</p>
+                    <button onclick="editPost(${post.id})">Edit</button>
+                    <button onclick="deletePost(${post.id})">Delete</button>
+                `;
+                postsDiv.appendChild(postDiv);
+            }
+        }
+
+        async function createPost() {
+            const author = prompt('Enter author:');
+            const keywords = prompt('Enter keywords:');
+            const text = prompt('Enter text:');
+            const response = await fetch('/api/posts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ author, keywords, text })
+            });
+            const createdPost = await response.json();
+            if (createdPost.id) {
+                window.location.href = `/posts/${createdPost.id}`;
+            } else {
+                alert('Failed to create post.');
+            }
+        }
+
+        async function editPost(postId) {
+            const author = prompt('Enter new author:');
+            const keywords = prompt('Enter new keywords:');
+            const text = prompt('Enter new text:');
+            const response = await fetch(`/api/posts/${postId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ author, keywords, text })
+            });
+            window.location.reload();
+        }
+
+        async function deletePost(postId) {
+            const response = await fetch(`/api/posts/${postId}`, {
+                method: 'DELETE'
+            });
+            window.location.href = '/';
+        }
+
+        fetchPosts();
+    </script>
+</body>
+</html>
